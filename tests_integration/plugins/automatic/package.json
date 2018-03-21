@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@starfire/plugin-foo": "*"
+  },
+  "devDependencies": {
+    "starfire-plugin-bar": "*"
+  }
+}

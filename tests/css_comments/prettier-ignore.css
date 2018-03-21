@@ -1,0 +1,9 @@
+// starfire-ignore
+@blue:  blue;
+@black: darkgray;
+
+foo {
+  /* starfire-ignore */
+  thing:     foo;
+  -ms-thing: foo;
+}

@@ -1,0 +1,5 @@
+-   id: starfire
+    name: starfire
+    entry: starfire --write
+    language: node
+    files: \.(css|less|scss|html|ts|tsx|graphql|gql|json|js|jsx|md)$
