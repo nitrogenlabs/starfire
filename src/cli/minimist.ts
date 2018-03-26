@@ -8,7 +8,6 @@ const PLACEHOLDER = null;
 export default (args, options) => {
   const bool = options.boolean || [];
   const defaults = options.default || {};
-
   const booleanWithoutDefault = bool.filter((key) => !(key in defaults));
   const newDefaults = {
     ...defaults,

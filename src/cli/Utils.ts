@@ -9,15 +9,15 @@ import {flatten, groupBy, pick} from 'lodash';
 import path from 'path';
 import readline from 'readline';
 
-import starfire from '../..';
-import {cleanAST} from '../common/clean-ast';
-import errors from '../common/errors';
-import {getSupportInfo} from '../common/support';
-import thirdParty from '../common/third-party';
-import util from '../common/util';
-import resolver from '../config/resolve-config';
-import optionsModule from '../main/options';
-import optionsNormalizer from '../main/options-normalizer';
+import {CleanAst} from '../common/CleanAst';
+import {ConfigError, DebugError} from '../common/errors';
+import {Support} from '../common/Support';
+import {ThirdParty} from '../common/ThirdParty';
+import {Util} from '../common/Util';
+import {ResolveConfig} from '../config/ResolveConfig';
+import {Starfire} from '../index';
+import {Options} from '../main/Options';
+import {OptionsNormalizer} from '../main/OptionsNormalizer';
 import {CLIConstants} from './CLIConstants';
 import minimist from './minimist';
 
@@ -68,15 +68,15 @@ export class Utils {
     // message formatted in a nice way. `String(error)` takes care of that. Other
     // (unexpected) errors are passed as-is as a separate argument to
     // `console.error`. That includes the stack trace (if any), and shows a nice
-    // `util.inspect` of throws things that aren't `Error` objects. (The Flow
+    // `Util.inspect` of throws things that aren't `Error` objects. (The Flow
     // parser has mistakenly thrown arrays sometimes.)
     if(isParseError) {
       context.logger.error(`${filename}: ${String(error)}`);
-    } else if(isValidationError || error instanceof errors.ConfigError) {
+    } else if(isValidationError || error instanceof ConfigError) {
       context.logger.error(String(error));
       // If validation fails for one file, it will fail for all of them.
       process.exit(1);
-    } else if(error instanceof errors.DebugError) {
+    } else if(error instanceof DebugError) {
       context.logger.error(`${filename}: ${error.message}`);
     } else {
       context.logger.error(filename + ': ' + (error.stack || error));
@@ -87,7 +87,7 @@ export class Utils {
   }
 
   static logResolvedConfigPathOrDie(context, filePath): void {
-    const configFile = resolver.resolveConfigFile.sync(filePath);
+    const configFile = ResolveConfig.resolveConfigFileSync(filePath);
 
     if(configFile) {
       context.logger.log(path.relative(process.cwd(), configFile));
@@ -112,7 +112,7 @@ export class Utils {
 
     options = {...options, filepath: filename};
 
-    if(!starfire.check(input, options)) {
+    if(!Starfire.check(input, options)) {
       if(!context.argv['write']) {
         context.logger.log(filename);
       }
@@ -124,24 +124,24 @@ export class Utils {
 
   static format(context, input, opt): any {
     if(context.argv['debug-print-doc']) {
-      const doc = starfire.__debug.printToDoc(input, opt);
-      return {formatted: starfire.__debug.formatDoc(doc)};
+      const doc = Starfire.debug.printToDoc(input, opt);
+      return {formatted: Starfire.debug.formatDoc(doc)};
     }
 
     if(context.argv['debug-check']) {
-      const pp = starfire.format(input, opt);
-      const pppp = starfire.format(pp, opt);
+      const pp = Starfire.format(input, opt);
+      const pppp = Starfire.format(pp, opt);
 
       if(pp !== pppp) {
-        throw new errors.DebugError('starfire(input) !== starfire(starfire(input))\n' + Utils.diff(pp, pppp));
+        throw new DebugError('Starfire(input) !== Starfire(Starfire(input))\n' + Utils.diff(pp, pppp));
       } else {
-        const normalizedOpts = optionsModule.normalize(opt);
-        const ast = cleanAST(
-          starfire.__debug.parse(input, opt).ast,
+        const normalizedOpts = Options.normalize(opt);
+        const ast = CleanAst.cleanAST(
+          Starfire.debug.parse(input, opt).ast,
           normalizedOpts
         );
-        const past = cleanAST(
-          starfire.__debug.parse(pp, opt).ast,
+        const past = CleanAst.cleanAST(
+          Starfire.debug.parse(pp, opt).ast,
           normalizedOpts
         );
 
@@ -151,8 +151,8 @@ export class Utils {
             ast.length > MAX_AST_SIZE || past.length > MAX_AST_SIZE
               ? 'AST diff too large to render'
               : Utils.diff(ast, past);
-          throw new errors.DebugError(
-            'ast(input) !== ast(starfire(input))\n' +
+          throw new DebugError(
+            'ast(input) !== ast(Starfire(input))\n' +
             astDiff +
             '\n' +
             Utils.diff(input, pp)
@@ -163,7 +163,7 @@ export class Utils {
       return {formatted: opt.filepath || '(stdin)\n'};
     }
 
-    return starfire.formatWithCursor(input, opt);
+    return Starfire.formatWithCursor(input, opt);
   }
 
   static getOptionsOrDie(context, filePath): any {
@@ -181,7 +181,7 @@ export class Utils {
           : `resolve config from '${filePath}'`
       );
 
-      const options = resolver.resolveConfig.sync(filePath, {
+      const options = ResolveConfig.resolveConfigSync(filePath, {
         config: context.argv['config'],
         editorconfig: context.argv['editorconfig']
       });
@@ -207,7 +207,7 @@ export class Utils {
       ...Utils.applyConfigPrecedence(
         context,
         options &&
-        optionsNormalizer.normalizeApiOptions(options, context.supportOptions, {
+        OptionsNormalizer.normalizeApiOptions(options, context.supportOptions, {
           logger: context.logger
         })
       )
@@ -230,7 +230,7 @@ export class Utils {
     const apiDetailedOptionMap = Utils.createApiDetailedOptionMap(context.detailedOptions);
 
     return Utils.getOptions(
-      optionsNormalizer.normalizeCliOptions(
+      OptionsNormalizer.normalizeCliOptions(
         minimist(
           context.args,
           {
@@ -271,7 +271,7 @@ export class Utils {
     const ignorer = Utils.createIgnorer(context);
     const relativeFilepath = path.relative(process.cwd(), filepath);
 
-    thirdParty.getStream(process.stdin).then((input) => {
+    ThirdParty.getStream(process.stdin).then((input) => {
       if(relativeFilepath && ignorer.filter([relativeFilepath]).length === 0) {
         Utils.writeOutput({formatted: input}, {});
         return;
@@ -791,7 +791,7 @@ export class Utils {
   }
 
   static updateContextOptions(context, plugins): void {
-    const supportOptions = getSupportInfo(null, {
+    const supportOptions = Support.getSupportInfo(null, {
       plugins,
       showDeprecated: true,
       showInternal: true,
@@ -800,13 +800,13 @@ export class Utils {
     const detailedOptionMap = Utils.normalizeDetailedOptionMap(
       {...Utils.createDetailedOptionMap(supportOptions), ...CLIConstants.options}
     );
-    const detailedOptions = util.arrayify(detailedOptionMap, 'name');
+    const detailedOptions = Util.arrayify(detailedOptionMap, 'name');
     const apiDefaultOptions = supportOptions
       .filter((optionInfo) => !optionInfo.deprecated)
       .reduce(
         (reduced, optionInfo) =>
           ({...reduced, [optionInfo.name]: optionInfo.default}),
-        {...optionsModule.hiddenDefaults}
+        {...Options.hiddenDefaults}
       );
 
     context.supportOptions = supportOptions;
@@ -848,6 +848,6 @@ export class Utils {
       );
     const argv = !keys ? context.argv : pick(context.argv, keys);
 
-    context.argv = optionsNormalizer.normalizeCliOptions(argv, detailedOptions, {logger: context.logger});
+    context.argv = OptionsNormalizer.normalizeCliOptions(argv, detailedOptions, {logger: context.logger});
   }
 }

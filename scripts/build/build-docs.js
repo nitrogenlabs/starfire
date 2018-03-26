@@ -48,10 +48,10 @@ shell.exec(
 })(`${docs}/index.js`);
 
 shell.exec(
-  `rollup -c scripts/build/rollup.docs.config.js --environment filepath:parser-babylon.js -i ${starfirePath}/parser-babylon.js`
+  `rollup -c scripts/build/rollup.docs.config.js --environment filepath:ParserBabylon.js -i ${starfirePath}/ParserBabylon.js`
 );
 shell.exec(
-  `node_modules/babel-cli/bin/babel.js ${docs}/parser-babylon.js --out-file ${docs}/parser-babylon.js --presets=es2015`
+  `node_modules/babel-cli/bin/babel.js ${docs}/ParserBabylon.js --out-file ${docs}/ParserBabylon.js --presets=es2015`
 );
 
 for(const parser of parserPaths) {

@@ -31,7 +31,7 @@ shell.chmod("+x", "./dist/bin-starfire.js");
 shell.exec("rollup -c scripts/build/rollup.third-party.config.js");
 
 for(const parser of parsers) {
-  if(parser.endsWith("postcss")) {
+  if(parser.endsWith("css")) {
     continue;
   }
   shell.exec(
@@ -39,19 +39,19 @@ for(const parser of parsers) {
   );
   if(parser.endsWith("glimmer")) {
     shell.exec(
-      `node_modules/babel-cli/bin/babel.js dist/parser-glimmer.js --out-file dist/parser-glimmer.js --presets=es2015`
+      `node_modules/babel-cli/bin/babel.js dist/ParserGlimmer.js --out-file dist/ParserGlimmer.js --presets=es2015`
     );
   }
 }
 
-shell.echo("\nsrc/language-css/parser-postcss.js → dist/parser-postcss.js");
+shell.echo("\nsrc/languages/css/ParserCSS.ts → dist/ParserCSS.js");
 // PostCSS has dependency cycles and won't work correctly with rollup :(
 shell.exec(
-  "webpack --hide-modules src/language-css/parser-postcss.js dist/parser-postcss.js"
+  "webpack --hide-modules src/languages/css/ParserCSS.ts dist/ParserCSS.js"
 );
 // Prepend module.exports =
-const content = shell.cat("dist/parser-postcss.js").stdout;
-pipe(`module.exports = ${content}`).to("dist/parser-postcss.js");
+const content = shell.cat("dist/ParserCSS.js").stdout;
+pipe(`module.exports = ${content}`).to("dist/ParserCSS.js");
 
 shell.echo();
 

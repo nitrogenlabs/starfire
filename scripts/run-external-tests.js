@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const globby = require("globby");
-const format = require("../src/cli-util").format;
+const {format} = require("../src/cli/Utils");
 
 function tryFormat(file) {
   const content = fs.readFileSync(file, "utf8");
@@ -78,9 +78,7 @@ function run(argv) {
   }
 
   console.log("");
-  console.log(
-    results.bad.map(data => `${data.file}\n${data.error}`).join("\n\n\n")
-  );
+  console.log(results.bad.map(data => `${data.file}\n${data.error}`).join("\n\n\n"));
 
   return 0;
 }

@@ -25,7 +25,7 @@ const code = shell.exec("yarn test --color --runInBand", {
   env: Object.assign({}, process.env, {
     NODE_ENV: "production",
     AST_COMPARE: "1",
-    PRETTIER_DIR: path.join(tmpDir, "node_modules/starfire")
+    STARFIRE_DIR: path.join(tmpDir, "node_modules/starfire")
   }),
   shell: true
 }).code;

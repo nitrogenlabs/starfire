@@ -1,6 +1,6 @@
 import stringify from 'json-stable-stringify';
 
-import {starfire} from '../..';
+import {Starfire} from '../index';
 import {Utils} from './Utils';
 
 export const run = (args) => {
@@ -22,7 +22,7 @@ export const run = (args) => {
     }
 
     if(context.argv['version']) {
-      context.logger.log(starfire.version);
+      context.logger.log(Starfire.version);
       process.exit(0);
     }
 
@@ -37,7 +37,7 @@ export const run = (args) => {
     }
 
     if(context.argv['support-info']) {
-      context.logger.log(starfire.format(stringify(starfire.getSupportInfo()), {parser: 'json'}));
+      context.logger.log(Starfire.format(stringify(Starfire.getSupportInfo()), {parser: 'json'}));
       process.exit(0);
     }
 

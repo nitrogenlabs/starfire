@@ -1,13 +1,10 @@
-"use strict";
-
-module.exports = [
-  "language-js/parser-babylon",
-  "language-js/parser-flow",
-  "language-js/parser-typescript",
-  "language-graphql/parser-graphql",
-  "language-handlebars/parser-glimmer",
-  "language-css/parser-postcss",
-  "language-html/parser-parse5",
-  "language-markdown/parser-markdown",
-  "language-vue/parser-vue"
+export default [
+  "languages/js/ParserBabylon",
+  "languages/js/ParserFlow",
+  "languages/js/ParserTypescript",
+  "languages/graphql/ParserGraphql",
+  "languages/handlebars/ParserGlimmer",
+  "languages/css/ParserCSS",
+  "languages/html/ParserHTML",
+  "languages/markdown/ParserMarkdown"
 ];

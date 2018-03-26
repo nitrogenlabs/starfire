@@ -5,7 +5,7 @@ export class CLIConstants {
   static CATEGORY_OTHER: string = 'Other';
   static CATEGORY_OUTPUT: string = 'Output';
 
-  static categoryOrder = [
+  static categoryOrder: string[] = [
     CLIConstants.CATEGORY_OUTPUT,
     CLIConstants.CATEGORY_FORMAT,
     CLIConstants.CATEGORY_CONFIG,
@@ -109,12 +109,8 @@ export class CLIConstants {
       description: 'Define in which order config files and CLI options should be evaluated.',
       type: 'choice'
     },
-    'debug-check': {
-      type: 'boolean'
-    },
-    'debug-print-doc': {
-      type: 'boolean'
-    },
+    'debug-check': {type: 'boolean'},
+    'debug-print-doc': {type: 'boolean'},
     'editorconfig': {
       category: CLIConstants.CATEGORY_CONFIG,
       default: true,
@@ -177,5 +173,4 @@ export class CLIConstants {
 
   static usageSummary: string = 'Usage: starfire [options] [file/glob ...]\n' +
     'By default, output is written to stdout.\nStdin is read if it is piped to Starfire and no files are given.';
-
 }

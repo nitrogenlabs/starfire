@@ -2,4 +2,4 @@
 require('ts-node/register');
 
 // Run production server
-require('./src/main');
+require('./src/index.ts');

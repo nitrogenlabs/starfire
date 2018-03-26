@@ -61,7 +61,10 @@
     ],
     "max-line-length": [
       true,
-      120
+      {
+        "limit": 120,
+        "ignore-pattern": "// "
+      }
     ],
     "member-access": [
       true,
@@ -85,11 +88,12 @@
     "no-invalid-this": true,
     "no-shadowed-variable": true,
     "no-string-literal": false,
-    "no-switch-case-fall-through": true,
+    "no-switch-case-fall-through": false,
     "no-submodule-imports": false,
     "no-trailing-whitespace": false,
     "no-unsafe-finally": true,
     "no-unused-expression": true,
+    "no-var-requires": false,
     "object-literal-sort-keys": true,
     "one-line": false,
     "only-arrow-functions": true,
@@ -119,10 +123,7 @@
       }
     ],
     "triple-equals": true,
-    "typedef": [
-      true,
-      "call-signature"
-    ],
+    "typedef": false,
     "use-isnan": true,
     "whitespace": [
       true,
