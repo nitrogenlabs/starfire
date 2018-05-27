@@ -1,11 +1,9 @@
-import {SFOptionsType} from '../../types/options';
 import {options as jsOptions} from '../js/options';
-
 
 const CATEGORY_MARKDOWN = 'Markdown';
 
 // format based on https://github.com/starfire/starfire/blob/master/src/common/support.js
-export const options: SFOptionsType = {
+export const options = {
   proseWrap: {
     category: CATEGORY_MARKDOWN,
     choices: [

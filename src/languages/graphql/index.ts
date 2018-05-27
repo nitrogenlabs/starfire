@@ -1,11 +1,10 @@
-import {SFOptionsType} from '../../types/options';
 import {options} from './options';
 import {PrinterGraphql} from './PrinterGraphql';
 
 // Based on:
 // https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
 export class LanguageGraphql {
-  static options: SFOptionsType = options;
+  static options = options;
 
   static languages = [
     {

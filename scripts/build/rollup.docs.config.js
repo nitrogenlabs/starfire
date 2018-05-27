@@ -5,16 +5,18 @@ import resolve from 'rollup-plugin-node-resolve';
 
 import baseConfig from './rollup.base.config.js';
 
-const filepath = process.env.filepath;
-const filename = filepath.replace(/.+\//, "");
-const basename = filename.replace(/\..+/, "");
+const filePath = process.env.filePath;
+const filename = filePath.replace(/.+\//, '');
+const basename = filename.replace(/\..+/, '');
 
 export default Object.assign(baseConfig, {
-  entry: "node_modules/starfire/" + filepath,
-  dest: "website/static/lib/" + filename,
-  format: "iife",
+  input: `node_modules/starfire/${filePath}`,
+  output: {
+    format: 'iife',
+    lib: `website/static/lib/${filename}`
+  },
   plugins: [json(), resolve({preferBuiltins: true}), commonjs(), globals()],
   useStrict: false,
-  moduleName: basename.replace(/.+-/, ""),
-  external: ["assert", "fs", "module"]
+  moduleName: basename.replace(/.+-/, ''),
+  external: ['assert', 'fs', 'module']
 });

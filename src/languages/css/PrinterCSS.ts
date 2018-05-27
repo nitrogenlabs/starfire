@@ -1,4 +1,4 @@
-import htmlTagNames from 'html-tag-names';
+// import htmlTagNames from 'html-tag-names';
 import {Util} from '../../common/Util';
 import {UtilShared} from '../../common/UtilShared';
 import {DocBuilders} from '../../doc/DocBuilders';
@@ -745,7 +745,7 @@ export class PrinterCSS {
   }
 
   static isHTMLTag(value) {
-    return htmlTagNames.indexOf(value.toLowerCase()) !== -1;
+    return true; // htmlTagNames.indexOf(value.toLowerCase()) !== -1;
   }
 
   static insideURLFunctionNode(path) {

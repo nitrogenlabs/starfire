@@ -1,6 +1,6 @@
-import dedent from 'dedent';
-import semver from 'semver';
-import packageJson from '../../package.json';
+import {default as dedent} from 'dedent';
+import * as semver from 'semver';
+import * as jsonPackage from '../../package.json';
 import {CLIConstants} from '../cli/CLIConstants';
 import {SFSupportType} from '../types/support';
 import {LoadPlugins} from './LoadPlugins';
@@ -61,13 +61,13 @@ export class Support {
       since: '0.0.0',
       type: 'int'
     },
-    filepath: {
+    filePath: {
       category: Support.CATEGORY_SPECIAL,
       cliCategory: CLIConstants.CATEGORY_OTHER,
       cliDescription: 'Path to the file to pretend that stdin comes from.',
       cliName: 'stdin-filepath',
       default: undefined,
-      description: 'Specify the input filepath. This will be used to do parser inference.',
+      description: 'Specify the input filePath. This will be used to do parser inference.',
       since: '0.0.0',
       type: 'path'
     },
@@ -78,6 +78,14 @@ export class Support {
       description: 'Insert @format pragma into file\'s first docblock comment.',
       since: '0.0.0',
       type: 'boolean'
+    },
+    maxLineLength: {
+      category: Support.CATEGORY_GLOBAL,
+      default: 120,
+      description: 'The line length where Starfire will try wrap.',
+      range: {start: 0, end: Infinity, step: 1},
+      since: '0.0.0',
+      type: 'int'
     },
     parser: {
       category: Support.CATEGORY_GLOBAL,
@@ -108,14 +116,6 @@ export class Support {
       exception: (value) => typeof value === 'string' || typeof value === 'object',
       since: '0.0.0',
       type: 'path'
-    },
-    printWidth: {
-      category: Support.CATEGORY_GLOBAL,
-      default: 120,
-      description: 'The line length where Starfire will try wrap.',
-      range: {start: 0, end: Infinity, step: 1},
-      since: '0.0.0',
-      type: 'int'
     },
     rangeEnd: {
       category: Support.CATEGORY_SPECIAL,
@@ -178,7 +178,8 @@ export class Support {
     };
 
     if(!version) {
-      version = packageJson.version;
+      const appPackage: any = {...jsonPackage};
+      version = appPackage.version;
     }
 
     const plugins = opts.pluginsLoaded ? opts.plugins : LoadPlugins.loadPlugins(opts.plugins);

@@ -1,6 +1,6 @@
 
-import readPkgUp from 'read-pkg-up';
-import resolve from 'resolve';
+import * as readPkgUp from 'read-pkg-up';
+import * as resolve from 'resolve';
 
 import {LanguageCSS} from '../languages/css';
 import {LanguageGraphql} from '../languages/graphql';

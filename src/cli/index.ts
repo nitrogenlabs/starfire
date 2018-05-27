@@ -1,13 +1,13 @@
 import stringify from 'json-stable-stringify';
 
-import {Starfire} from '../index';
-import {Utils} from './Utils';
+import {Starfire} from '../StarFire/Starfire';
+import {CliUtils} from './CliUtils';
 
 export const run = (args) => {
-  const context = Utils.createContext(args);
+  const context = CliUtils.createContext(args);
 
   try {
-    Utils.initContext(context);
+    CliUtils.initContext(context);
 
     context.logger.debug(`normalized argv: ${JSON.stringify(context.argv)}`);
 
@@ -29,8 +29,8 @@ export const run = (args) => {
     if(context.argv['help'] !== undefined) {
       context.logger.log(
         typeof context.argv['help'] === 'string' && context.argv['help'] !== ''
-          ? Utils.createDetailedUsage(context, context.argv['help'])
-          : Utils.createUsage(context)
+          ? CliUtils.createDetailedUsage(context, context.argv['help'])
+          : CliUtils.createUsage(context)
       );
 
       process.exit(0);
@@ -45,13 +45,13 @@ export const run = (args) => {
     const useStdin = context.argv['stdin'] || (!hasFilePatterns && !process.stdin.isTTY);
 
     if(context.argv['find-config-path']) {
-      Utils.logResolvedConfigPathOrDie(context, context.argv['find-config-path']);
+      CliUtils.logResolvedConfigPathOrDie(context, context.argv['find-config-path']);
     } else if(useStdin) {
-      Utils.formatStdin(context);
+      CliUtils.formatStdin(context);
     } else if(hasFilePatterns) {
-      Utils.formatFiles(context);
+      CliUtils.formatFiles(context);
     } else {
-      context.logger.log(Utils.createUsage(context));
+      context.logger.log(CliUtils.createUsage(context));
       process.exit(1);
     }
   } catch(error) {

@@ -1,4 +1,4 @@
-import {SFCondtionalOptionsType, SFDocumentType} from '../types/doc';
+import {SFCondtionalOptionsType} from '../types/doc';
 
 export class DocBuilders {
   static lineSuffixBoundary = {type: 'line-suffix-boundary'};
@@ -52,7 +52,7 @@ export class DocBuilders {
     return {type: 'align', contents, n};
   }
 
-  static group(contents, opts: SFCondtionalOptionsType = {}): SFDocumentType {
+  static group(contents, opts: SFCondtionalOptionsType = {}) {
     if(process.env.NODE_ENV !== 'production') {
       DocBuilders.assertDoc(contents);
     }

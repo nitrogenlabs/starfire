@@ -3,7 +3,7 @@ import emojiRegex from 'emoji-regex';
 import escapeStringRegexp from 'escape-string-regexp';
 import {isNil} from 'lodash';
 import stringWidth from 'string-width';
-import getUnicodeRegex from 'unicode-regex';
+import unicode from 'unicode-regex';
 import {SFSplitWordType, SFUtilOptionsType} from '../types/util';
 
 export class Util {
@@ -14,15 +14,8 @@ export class Util {
 
   static get punctuationCharRange() {
     // http://spec.commonmark.org/0.25/#punctuation-character
-    return `${Util.asciiPunctuationCharRange}${getUnicodeRegex([
-      'Pc',
-      'Pd',
-      'Pe',
-      'Pf',
-      'Pi',
-      'Po',
-      'Ps'
-    ]).source.slice(1, -1)}`; // remove bracket expression `[` and `]`
+    return `${Util.asciiPunctuationCharRange}${unicode({General_Category: ['Punctuation']}).toRegExp()}`;
+    // remove bracket expression `[` and `]`
   }
 
   static get punctuationRegex() {
@@ -30,7 +23,7 @@ export class Util {
   }
 
   static get cjkPattern() {
-    return getCjkRegex().source;
+    return getCjkRegex().toRegExp();
   }
 
   static isExportDeclaration(node) {
@@ -243,6 +236,7 @@ export class Util {
   static getNextNonSpaceNonCommentCharacterIndex(text: string, node, locEnd): number {
     let oldIdx: number;
     let idx: number = locEnd(node);
+
     while(idx !== oldIdx) {
       oldIdx = idx;
       idx = Util.skipSpaces(text, idx);
@@ -254,9 +248,7 @@ export class Util {
   }
 
   static getNextNonSpaceNonCommentCharacter(text: string, node, locEnd) {
-    return text.charAt(
-      Util.getNextNonSpaceNonCommentCharacterIndex(text, node, locEnd)
-    );
+    return text.charAt(Util.getNextNonSpaceNonCommentCharacterIndex(text, node, locEnd));
   }
 
   static hasSpaces(text, index, opts) {
@@ -267,9 +259,11 @@ export class Util {
 
   // Super inefficient, needs to be cached.
   static lineColumnToIndex(lineColumn, text) {
-    let index = 0;
+    let index: number = 0;
+
     for(let i = 0; i < lineColumn.line - 1; ++i) {
       index = text.indexOf('\n', index) + 1;
+
       if(index === -1) {
         return -1;
       }
@@ -277,7 +271,7 @@ export class Util {
     return index + lineColumn.column;
   }
 
-  static setLocStart(node, index) {
+  static setLocStart(node, index: number) {
     if(node.range) {
       node.range[0] = index;
     } else {
@@ -285,7 +279,7 @@ export class Util {
     }
   }
 
-  static setLocEnd(node, index) {
+  static setLocEnd(node, index: number) {
     if(node.range) {
       node.range[1] = index;
     } else {
@@ -307,7 +301,10 @@ export class Util {
       ['+', '-'],
       ['*', '/', '%'],
       ['**']
-    ].forEach((tier, i) => tier.forEach((op) => Util.PRECEDENCE[op] = i));
+    ].reduce((priority, ops) => {
+      ops.forEach((op, i) => priority[op] = Object.keys(priority).length);
+      return priority;
+    }, {});
   }
 
   static getPrecedence(op) {
@@ -740,7 +737,7 @@ export class Util {
     // see https://github.com/sindresorhus/string-width/issues/11
     // for the reason why not implemented in `string-width`
     const regex: RegExp = emojiRegex();
-    return stringWidth(text.replace(emojiRegex, '  '));
+    return stringWidth(text.replace(regex, '  '));
   }
 
   static hasIgnoreComment(path) {

@@ -2,7 +2,7 @@ import path from 'path';
 import {LoadPlugins} from '../common/LoadPlugins';
 import {Support} from '../common/Support';
 import {SFParserType} from '../types/doc';
-import {SFOptionsType} from '../types/options';
+import {SFLanguageOptionsType} from '../types/options';
 import {OptionsNormalizer} from './OptionsNormalizer';
 import {Parser} from './Parser';
 import {Plugins} from './Plugins';
@@ -16,7 +16,7 @@ export class Options {
   };
 
   // Copy options and fill in default values.
-  static normalize(options: SFOptionsType, opts: SFOptionsType = {}) {
+  static normalize(options: SFLanguageOptionsType, opts: SFLanguageOptionsType = {}) {
     const rawOptions = {...options};
     const plugins = LoadPlugins.loadPlugins(rawOptions.plugins);
     rawOptions.plugins = plugins;
@@ -32,7 +32,7 @@ export class Options {
     );
 
     if(opts.inferParser !== false) {
-      const {filepath: rawPath, parser: rawParser, plugins: rawPlugins} = rawOptions;
+      const {filePath: rawPath, parser: rawParser, plugins: rawPlugins} = rawOptions;
 
       if(rawPath && (!rawParser || rawParser === defaults.parser)) {
         const inferredParser = Options.inferParser(rawPath, rawPlugins);
@@ -68,7 +68,7 @@ export class Options {
     const mixedDefaults = {...defaults, ...pluginDefaults};
 
     Object.keys(mixedDefaults).forEach((k) => {
-      if(!rawOptions[k]) {
+      if(rawOptions[k] === undefined) {
         rawOptions[k] = mixedDefaults[k];
       }
     });
@@ -84,9 +84,9 @@ export class Options {
     );
   }
 
-  static inferParser(filepath: string, plugins) {
-    const extension: string = path.extname(filepath);
-    const filename: string = path.basename(filepath).toLowerCase();
+  static inferParser(filePath: string, plugins) {
+    const extension: string = path.extname(filePath);
+    const filename: string = path.basename(filePath).toLowerCase();
     const languageParser = Support.getSupportInfo(null, {plugins, pluginsLoaded: true})
       .languages
       .find((language) => language.since !== null && (language.extensions.indexOf(extension) > -1 ||

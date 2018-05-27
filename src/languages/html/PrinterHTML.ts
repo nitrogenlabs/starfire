@@ -2,7 +2,7 @@
 
 import {Util} from '../../common/util';
 import {DocBuilders} from '../../doc/DocBuilders';
-const {concat, group, hardline, indent, join, line, softline} = DocBuilders;
+const {concat, dedent, group, hardline, indent, join, softline} = DocBuilders;
 
 export class PrinterHTML {
   static print = PrinterHTML.genericPrint;
@@ -28,6 +28,7 @@ export class PrinterHTML {
 
   static genericPrint(path, options, print) {
     const n = path.getValue();
+
     if(!n) {
       return '';
     }
@@ -49,63 +50,71 @@ export class PrinterHTML {
       case 'script':
       case 'style':
       case 'tag': {
-        const selfClose = PrinterHTML.voidTags[n.name] ? '>' : ' />';
+        const nodeName: string = n.name.toLowerCase();
+        const voidTag: boolean = PrinterHTML.voidTags[nodeName];
+        const selfClose = voidTag ? '>' : ' />';
         const children = PrinterHTML.printChildren(path, print);
+        // const hasNewline = Util.hasNewlineInRange(options.originalText, options.locStart(n), options.locEnd(n));
+        const childLength: number = n.children.length;
+        let initialBreak: any = '';
+        const hasStartBreak: boolean = ((n.prev || {}).data || '').indexOf('\n') >= 0;
 
-        const hasNewline = Util.hasNewlineInRange(
-          options.originalText,
-          options.locStart(n),
-          options.locEnd(n)
-        );
+        if(n.parent.type === 'root') {
+          initialBreak = '';
+        } else {
+          initialBreak = hasStartBreak ? hardline : '';
+        }
+
+        const firstChildType: string = childLength && n.children[0].type;
+        const tagBreak = firstChildType === 'text' ? '' : hardline;
 
         return group(
           concat([
-            hasNewline ? hardline : '',
+            initialBreak,
             '<',
-            n.name,
+            nodeName,
             PrinterHTML.printAttributes(path, print),
-
-            n.children.length ? '>' : selfClose,
-
-            n.name.toLowerCase() === 'html'
-              ? concat([hardline, children])
-              : indent(children),
-            n.children.length ? concat([softline, '</', n.name, '>']) : hardline
+            childLength ? concat(['>', tagBreak]) : concat([selfClose, '']),
+            nodeName === 'html' ? concat([hardline, children]) : indent(children),
+            childLength ? dedent(concat([tagBreak, '</', nodeName, '>', hardline])) : hardline
           ])
         );
       }
       case 'comment': {
-        return concat(['<!-- ', n.data.trim(), ' -->']);
+        const isRoot: boolean = n.parent.type === 'root';
+        const startBreak = isRoot ? '' : softline;
+        const endBreak = isRoot ? hardline : '';
+        return concat([startBreak, '<!-- ', n.data.trim(), ' -->', endBreak]);
       }
       case 'attribute': {
-        if(!n.value) {
-          return n.key;
-        }
-        return concat([n.key, '="', n.value, '"']);
-      }
+        const attributeName: string = n.key.toLowerCase();
 
+        if(!n.value) {
+          return attributeName;
+        }
+
+        return concat([attributeName, '="', n.value, '"']);
+      }
       default:
         /* istanbul ignore next */
-        throw new Error('unknown htmlparser2 type: ' + n.type);
+        throw new Error('Unknown htmlparser2 type: ' + n.type);
     }
   }
 
   static printAttributes(path, print) {
     const node = path.getValue();
-
-    return concat([
-      node.attributes.length ? ' ' : '',
-      indent(join(line, path.map(print, 'attributes')))
-    ]);
+    const attributes = indent(join('', path.map(print, 'attributes')));
+    return concat([node.attributes.length ? ' ' : '', attributes]);
   }
 
   static printChildren(path, print) {
     const children = [];
+
     path.each((childPath) => {
-      const child = childPath.getValue();
-      if(child.type !== 'text') {
-        children.push(hardline);
-      }
+      // const child = childPath.getValue();
+      // if(child.type !== 'text') {
+      //   children.push(hardline);
+      // }
       children.push(childPath.call(print));
     }, 'children');
     return concat(children);

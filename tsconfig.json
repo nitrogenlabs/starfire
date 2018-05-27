@@ -1,54 +1,38 @@
 {
   "compilerOptions": {
-    "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
     "declaration": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true,
     "jsx": "react",
     "lib": [
-      "dom",
-      "es7"
+      "esnext",
+      "dom"
     ],
-    "module": "es2015",
+    "module": "commonjs",
     "moduleResolution": "node",
-    "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noStrictGenericChecks": true,
     "noUnusedLocals": true,
-    "outDir": "lib",
-    "preserveConstEnums": true,
-    "pretty": false,
-    "removeComments": true,
+    "outDir": "./dist",
+    "pretty": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "strictNullChecks": false,
-    "target": "es5",
+    "target": "esnext",
     "typeRoots": [
       "node_modules/@types",
       "node_modules/json-d-ts"
     ]
   },
-  "compileOnSave": true,
-  "exclude": [
-    "**/*.test.*",
-    "android",
-    "build",
-    "docs",
-    "ios",
-    "lib",
-    "node_modules",
-    "test"
-  ],
   "include": [
     "./src/**/*"
   ],
-  "types": [
-    "./node_modules/@types",
-    "./node_modules/json-d-ts",
-    "./src/lib/types",
-    "react",
-    "react-native",
-    "jest"
+  "exclude": [
+    "**/*.test.*",
+    "./dist",
+    "./node_modules",
+    "./test"
   ]
 }

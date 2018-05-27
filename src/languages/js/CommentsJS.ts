@@ -1,3 +1,4 @@
+import {SFLanguageOptionsType} from 'types/options';
 import {Util} from '../../common/Util';
 
 export class CommentsJS {
@@ -385,12 +386,13 @@ export class CommentsJS {
     return false;
   }
 
-  static handleCommentAfterArrowParams(text, enclosingNode, comment, options) {
+  static handleCommentAfterArrowParams(text, enclosingNode, comment, options: SFLanguageOptionsType) {
     if(!(enclosingNode && enclosingNode.type === 'ArrowFunctionExpression')) {
       return false;
     }
 
-    const index = Util.getNextNonSpaceNonCommentCharacterIndex(text, comment, options);
+    const {locEnd} = options;
+    const index = Util.getNextNonSpaceNonCommentCharacterIndex(text, comment, locEnd);
 
     if(text.substr(index, 2) === '=>') {
       Util.addDanglingComment(enclosingNode, comment);

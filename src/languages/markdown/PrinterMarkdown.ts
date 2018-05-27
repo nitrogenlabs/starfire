@@ -388,7 +388,7 @@ export class PrinterMarkdown {
   static getNthSiblingIndex(node, parentNode, condition) {
     condition = condition || (() => true);
 
-    let index = -1;
+    let index: number = -1;
 
     for(const childNode of parentNode.children) {
       if(childNode.type === node.type && condition(childNode)) {
@@ -401,6 +401,8 @@ export class PrinterMarkdown {
         return index;
       }
     }
+
+    return index;
   }
 
   static getAncestorCounter(path, typeOrTypes) {

@@ -1,14 +1,13 @@
 import path from 'path';
-
 import {ConfigError} from '../common/errors/ConfigError';
 import {LanguageJS} from '../languages/js';
 import {SFParserType} from '../types/doc';
-import {SFOptionsType} from '../types/options';
+import {SFLanguageOptionsType} from '../types/options';
 
 const {locStart, locEnd} = LanguageJS;
 
 export class Parser {
-  static getParsers(options: SFOptionsType) {
+  static getParsers(options: SFLanguageOptionsType) {
     return options.plugins.reduce((parsers, plugin) => ({...parsers, ...plugin.parsers}), {});
   }
 

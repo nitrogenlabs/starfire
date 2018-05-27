@@ -75,19 +75,19 @@ export class ResolveConfig {
   }
 
   static resolveConfigFile(filePath) {
-    return ResolveConfig.getLoadFunction({sync: false})(filePath).then((result) => result ? result.filepath : null);
+    return ResolveConfig.getLoadFunction({sync: false})(filePath).then((result) => result ? result.filePath : null);
   }
 
   static resolveConfigFileSync(filePath) {
     const result = ResolveConfig.getLoadFunction({sync: true})(filePath);
-    return result ? result.filepath : null;
+    return result ? result.filePath : null;
   }
 
   static mergeOverrides(configResult, filePath) {
     const options = {...configResult.config};
     if(filePath && options.overrides) {
       const relativeFilePath = path.relative(
-        path.dirname(configResult.filepath),
+        path.dirname(configResult.filePath),
         filePath
       );
       for(const override of options.overrides) {

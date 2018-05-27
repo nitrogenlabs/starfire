@@ -72,6 +72,8 @@ export class DocUtils {
       if(hasStopped) {
         return false;
       }
+
+      return true;
     });
 
     return result;
@@ -92,6 +94,8 @@ export class DocUtils {
         if(doc.type === 'line') {
           return true;
         }
+
+        return false;
       },
       false
     );
@@ -112,6 +116,8 @@ export class DocUtils {
         if(doc.type === 'break-parent') {
           return true;
         }
+
+        return false;
       },
       false
     );
@@ -126,6 +132,7 @@ export class DocUtils {
         parentGroup.break = true;
       }
     }
+
     return null;
   }
 
@@ -146,6 +153,8 @@ export class DocUtils {
 
         alreadyVisited.set(groupDoc, true);
       }
+
+      return false;
     },
       (groupDoc) => {
         if(groupDoc.type === 'group') {

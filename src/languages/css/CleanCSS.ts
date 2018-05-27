@@ -1,4 +1,4 @@
-import htmlTagNames from 'html-tag-names';
+// import htmlTagNames from 'html-tag-names';
 
 export class CleanCSS {
   static clean(ast, newObj) {
@@ -113,9 +113,9 @@ export class CleanCSS {
     if(ast.type === 'selector-tag') {
       const lowercasedValue = ast.value.toLowerCase();
 
-      if(htmlTagNames.indexOf(lowercasedValue) !== -1) {
-        newObj.value = lowercasedValue;
-      }
+      // if(htmlTagNames.indexOf(lowercasedValue) !== -1) {
+      //   newObj.value = lowercasedValue;
+      // }
 
       if(['from', 'to'].indexOf(lowercasedValue) !== -1) {
         newObj.value = lowercasedValue;

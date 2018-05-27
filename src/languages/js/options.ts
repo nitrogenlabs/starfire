@@ -8,23 +8,31 @@ export const options = {
       {description: 'Omit parens when possible. Example: `x => x`', value: 'avoid'},
       {description: 'Always include parens. Example: `(x) => x`', value: 'always'}
     ],
-    default: 'avoid',
+    default: 'always',
     description: 'Include parentheses around a sole arrow function parameter.',
     since: '0.0.0',
     type: 'choice'
   },
   bracketSpacing: {
     category: CATEGORY_JAVASCRIPT,
-    default: true,
-    description: 'Print spaces between brackets.',
-    oppositeDescription: 'Do not print spaces between brackets.',
+    default: false,
+    description: 'Insert spaces between brackets.',
+    oppositeDescription: 'Do not insert spaces between brackets.',
     since: '0.0.0',
     type: 'boolean'
   },
   jsxBracketSameLine: {
     category: CATEGORY_JAVASCRIPT,
-    default: false,
+    default: true,
     description: 'Put > on the last line instead of at a new line.',
+    since: '0.0.0',
+    type: 'boolean'
+  },
+  keywordSpacing: {
+    category: CATEGORY_JAVASCRIPT,
+    default: false,
+    description: 'Insert space after keyword.',
+    oppositeDescription: 'Do not insert space after keyword.',
     since: '0.0.0',
     type: 'boolean'
   },
@@ -38,7 +46,7 @@ export const options = {
   },
   singleQuote: {
     category: CATEGORY_JAVASCRIPT,
-    default: false,
+    default: true,
     description: 'Use single quotes instead of double quotes.',
     since: '0.0.0',
     type: 'boolean'

@@ -85,6 +85,10 @@
     "no-empty": false,
     "no-empty-interface": false,
     "no-eval": false,
+    "no-implicit-dependencies": [
+      true,
+      "dev"
+    ],
     "no-invalid-this": true,
     "no-shadowed-variable": true,
     "no-string-literal": false,

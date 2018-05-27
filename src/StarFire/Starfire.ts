@@ -1,18 +1,18 @@
-import packageJson from '../package.json';
-import {Support} from './common/Support';
-import {Util} from './common/Util';
-import {ResolveConfig} from './config/ResolveConfig';
-import {DocBuilders} from './doc/DocBuilders';
-import {DocDebug} from './doc/DocDebug';
-import {DocPrinter} from './doc/DocPrinter';
-import {DocUtils} from './doc/DocUtils';
-import {AstToDoc} from './main/AstToDoc';
-import {Comments} from './main/Comments';
-import {Options} from './main/Options';
-import {Parser} from './main/Parser';
-import {SFASTType, SFCommentOptionsType, SFCommentsType} from './types/ast';
-import {SFParserType} from './types/doc';
-
+import * as jsonPackage from '../../package.json';
+import {Support} from '../common/Support';
+import {Util} from '../common/Util';
+import {ResolveConfig} from '../config/ResolveConfig';
+import {DocBuilders} from '../doc/DocBuilders';
+import {DocDebug} from '../doc/DocDebug';
+import {DocPrinter} from '../doc/DocPrinter';
+import {DocUtils} from '../doc/DocUtils';
+import {AstToDoc} from '../main/AstToDoc';
+import {Comments} from '../main/Comments';
+import {Options} from '../main/Options';
+import {Parser} from '../main/Parser';
+import {SFASTType, SFCommentsType} from '../types/ast';
+import {SFParserType} from '../types/doc';
+import {SFLanguageOptionsType} from '../types/options';
 
 export class Starfire {
   static clearConfigCache = ResolveConfig.clearCache;
@@ -25,7 +25,10 @@ export class Starfire {
   static getSupportInfo = Support.getSupportInfo;
   static resolveConfig = ResolveConfig.resolveConfig;
   static util = Util;
-  static version = packageJson.version;
+  static get version() {
+    const appPackage: any = {...jsonPackage};
+    return appPackage.version;
+  }
 
   static check(text, opts): boolean {
     try {
@@ -36,7 +39,7 @@ export class Starfire {
     }
   }
 
-  static format(text, opts, addAlignmentSize?) {
+  static format(text, opts: SFLanguageOptionsType, addAlignmentSize?) {
     return Starfire.formatWithCursor(text, opts, addAlignmentSize).formatted;
   }
 
@@ -47,10 +50,10 @@ export class Starfire {
       return '\r\n';
     }
 
-    return '\n';
+    return "\n";
   }
 
-  static attachComments(text: string, ast: SFASTType, opts: SFCommentOptionsType): SFCommentsType[] {
+  static attachComments(text: string, ast: SFASTType, opts: SFLanguageOptionsType): SFCommentsType[] {
     const astComments: SFCommentsType[] = ast.comments;
 
     if(astComments) {
@@ -79,14 +82,14 @@ export class Starfire {
 
     astComments.forEach((comment) => {
       if(!comment.printed) {
-        throw new Error(`Comment "${comment.value.trim()}" was not printed. Please report this error!`);
+        // throw new Error(`Comment "${comment.value.trim()}" was not printed. Please report this error!`);
       }
 
       delete comment.printed;
     });
   }
 
-  static formatWithCursor(text: string, opts, addAlignmentSize?: number) {
+  static formatWithCursor(text: string, opts: SFLanguageOptionsType, addAlignmentSize?: number) {
     opts = Options.normalize(opts);
     const selectedParser: SFParserType = Parser.resolveParser(opts);
     const hasPragma: boolean = !selectedParser.hasPragma || selectedParser.hasPragma(text);
@@ -114,9 +117,8 @@ export class Starfire {
 
     addAlignmentSize = addAlignmentSize || 0;
 
-    const result = Parser.parse(text, opts);
-    const ast = result.ast;
-    text = result.text;
+    const {ast, text: parsedText} = Parser.parse(text, opts);
+    text = parsedText;
     const formattedRangeOnly = Starfire.formatRange(text, opts, ast);
 
     if(formattedRangeOnly) {
@@ -128,6 +130,7 @@ export class Starfire {
     if(opts.cursorOffset >= 0) {
       const cursorNodeAndParents = Starfire.findNodeAtOffset(ast, opts.cursorOffset, opts);
       const cursorNode = cursorNodeAndParents.node;
+
       if(cursorNode) {
         cursorOffset = opts.cursorOffset - opts.locStart(cursorNode);
         opts.cursorNode = cursorNode;
@@ -341,7 +344,12 @@ export class Starfire {
     const rangeStart2 = Math.min(rangeStart, text.lastIndexOf('\n', rangeStart) + 1);
     const indentString = text.slice(rangeStart2, rangeStart);
     const alignmentSize = Util.getAlignmentSize(indentString, opts.tabWidth);
-    const formatOptions = {...opts, printWidth: opts.printWidth - alignmentSize, rangeEnd: Infinity, rangeStart: 0};
+    const formatOptions = {
+      ...opts,
+      maxLineLength: opts.maxLineLength - alignmentSize,
+      rangeEnd: Infinity,
+      rangeStart: 0
+    };
     const rangeFormatted = Starfire.format(rangeString, formatOptions, alignmentSize);
 
     // Since the range contracts to avoid trailing whitespace,

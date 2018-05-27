@@ -1,5 +1,4 @@
 import {Util} from '../../common/Util';
-import {SFOptionsType} from '../../types/options';
 import {options} from './options';
 import {PrinterCSS} from './PrinterCSS';
 
@@ -9,7 +8,7 @@ const {getLast, lineColumnToIndex} = Util;
 // https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
 
 export class LanguageCSS {
-  static options: SFOptionsType = options;
+  static options = options;
 
   static languages = [
     {

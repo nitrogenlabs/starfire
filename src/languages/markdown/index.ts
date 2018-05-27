@@ -1,4 +1,3 @@
-import {SFOptionsType} from '../../types/options';
 import {options} from './options';
 import {PrinterMarkdown} from './PrinterMarkdown';
 
@@ -6,7 +5,7 @@ import {PrinterMarkdown} from './PrinterMarkdown';
 // https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
 
 export class LanguageMarkdown {
-  static options: SFOptionsType = options;
+  static options = options;
   static languages = [
     {
       aceMode: 'markdown',

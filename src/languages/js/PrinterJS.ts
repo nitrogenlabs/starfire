@@ -1,5 +1,5 @@
 import assert from 'assert';
-import ESUtils from 'esutils';
+import * as ESUtils from 'esutils';
 import {PrintError} from '../../common/errors/PrintError';
 import {Util} from '../../common/Util';
 import {UtilShared} from '../../common/UtilShared';
@@ -63,7 +63,7 @@ export class PrinterJS {
 
   static genericPrint(path, options, printPath, args) {
     const node = path.getValue();
-    let needsParens = false;
+    let needsParens: boolean = false;
     const linesWithoutParens = PrinterJS.printPathNoParens(path, options, printPath, args);
 
     if(!node || isEmpty(linesWithoutParens)) {
@@ -71,6 +71,7 @@ export class PrinterJS {
     }
 
     const decorators = [];
+
     if(
       node.decorators &&
       node.decorators.length > 0 &&
@@ -200,7 +201,7 @@ export class PrinterJS {
 
     // We print a ConditionalExpression in either "JSX mode" or "normal mode".
     // See tests/jsx/conditional-expression.js for more info.
-    let jsxMode = false;
+    let jsxMode: boolean = false;
     const parent = path.getParentNode();
     let forceNoIndent = parent.type === operatorOpts.operatorName;
 
@@ -242,9 +243,7 @@ export class PrinterJS {
       // The only things we don't wrap are:
       // * Nested conditional expressions in alternates
       // * null
-      const isNull = (node) =>
-        node.type === 'NullLiteral' ||
-        (node.type === 'Literal' && node.value === null);
+      const isNull = (node) => node.type === 'NullLiteral' || (node.type === 'Literal' && node.value === null);
 
       parts.push(
         ' ? ',
@@ -275,9 +274,7 @@ export class PrinterJS {
       ]);
       parts.push(
         parent.type === operatorOpts.operatorName
-          ? options.useTabs
-            ? dedent(indent(part))
-            : align(Math.max(0, options.tabWidth - 2), part)
+          ? options.useTabs ? dedent(indent(part)) : align(Math.max(0, options.tabWidth - 2), part)
           : part
       );
     }
@@ -311,7 +308,22 @@ export class PrinterJS {
 
   static printPathNoParens(path, options, print, args) {
     const n = path.getValue();
-    const semi = options.semi ? ';' : '';
+    const {
+      bracketSpacing,
+      jsxBracketSameLine,
+      keywordSpacing,
+      locEnd,
+      locStart,
+      originalText,
+      parser,
+      semi: semiOpt,
+      tabWidth
+    } = options;
+
+    const semi = semiOpt ? ';' : '';
+    const bracketSpaceChar: string = bracketSpacing ? ' ' : '';
+    const bracketLineChar = bracketSpacing ? line : softline;
+    const keywordSpaceChar: string = keywordSpacing ? ' ' : '';
 
     if(!n) {
       return '';
@@ -332,7 +344,7 @@ export class PrinterJS {
           path.each((childPath) => {
             parts.push(print(childPath), semi, hardline);
 
-            if(UtilShared.isNextLineEmpty(options.originalText, childPath.getValue(), options)) {
+            if(UtilShared.isNextLineEmpty(originalText, childPath.getValue(), options)) {
               parts.push(hardline);
             }
           }, 'directives');
@@ -559,11 +571,11 @@ export class PrinterJS {
           options, true,
           (comment) => {
             const nextCharacter = UtilShared.getNextNonSpaceNonCommentCharacterIndex(
-              options.originalText,
+              originalText,
               comment,
               options
             );
-            return options.originalText.substr(nextCharacter, 2) === '=>';
+            return originalText.substr(nextCharacter, 2) === '=>';
           }
         );
         if(dangling) {
@@ -577,12 +589,12 @@ export class PrinterJS {
         // We want to always keep these types of nodes on the same line
         // as the arrow.
         if(
-          !PrinterJS.hasLeadingOwnLineComment(options.originalText, n.body, options) &&
+          !PrinterJS.hasLeadingOwnLineComment(originalText, n.body, options) &&
           (n.body.type === 'ArrayExpression' ||
             n.body.type === 'ObjectExpression' ||
             n.body.type === 'BlockStatement' ||
             PrinterJS.isJSXNode(n.body) ||
-            PrinterJS.isTemplateOnItsOwnLine(n.body, options.originalText, options) ||
+            PrinterJS.isTemplateOnItsOwnLine(n.body, originalText, options) ||
             n.body.type === 'ArrowFunctionExpression')
         ) {
           return group(concat([concat(parts), ' ', body]));
@@ -763,28 +775,15 @@ export class PrinterJS {
             n.specifiers &&
             !n.specifiers.some((node) => node.comments)
           ) {
-            parts.push(
-              concat([
-                '{',
-                options.bracketSpacing ? ' ' : '',
-                concat(grouped),
-                options.bracketSpacing ? ' ' : '',
-                '}'
-              ])
-            );
+            parts.push(concat(['{', bracketSpaceChar, concat(grouped), bracketSpaceChar, '}']));
           } else if(grouped.length >= 1) {
             parts.push(
               group(
                 concat([
                   '{',
-                  indent(
-                    concat([
-                      options.bracketSpacing ? line : softline,
-                      join(concat([',', line]), grouped)
-                    ])
-                  ),
+                  indent(concat([bracketLineChar, join(concat([',', line]), grouped)])),
                   ifBreak(PrinterJS.shouldPrintComma(options) ? ',' : ''),
-                  options.bracketSpacing ? line : softline,
+                  bracketLineChar,
                   '}'
                 ])
               )
@@ -795,12 +794,7 @@ export class PrinterJS {
         } else if(
           (n.importKind && n.importKind === 'type') ||
           // import {} from 'x'
-          /{\s*}/.test(
-            options.originalText.slice(
-              options.locStart(n),
-              options.locStart(n.source)
-            )
-          )
+          /{\s*}/.test(originalText.slice(locStart(n), locStart(n.source)))
         ) {
           parts.push('{} from ');
         }
@@ -846,7 +840,7 @@ export class PrinterJS {
           path.each((childPath) => {
             parts.push(indent(concat([hardline, print(childPath), semi])));
 
-            if(UtilShared.isNextLineEmpty(options.originalText, childPath.getValue(), options)) {
+            if(UtilShared.isNextLineEmpty(originalText, childPath.getValue(), options)) {
               parts.push(hardline);
             }
           }, 'directives');
@@ -921,7 +915,7 @@ export class PrinterJS {
           (n.arguments.length === 1 &&
             PrinterJS.isTemplateOnItsOwnLine(
               n.arguments[0],
-              options.originalText,
+              originalText,
               options
             )) ||
           // Keep test declarations on a single line
@@ -992,11 +986,7 @@ export class PrinterJS {
         const shouldBreak =
           n.type === 'TSInterfaceBody' ||
           (n.type !== 'ObjectPattern' &&
-            Util.hasNewlineInRange(
-              options.originalText,
-              options.locStart(n),
-              options.locEnd(n)
-            ));
+            Util.hasNewlineInRange(originalText, locStart(n), locEnd(n)));
         const parent = path.getParentNode(0);
         const isFlowInterfaceLikeBody =
           isTypeAnnotation &&
@@ -1033,14 +1023,11 @@ export class PrinterJS {
         // interleaved in the source code. So we need to reorder them before
         // printing them.
         const propsAndLoc = [];
+
         fields.forEach((field) => {
           path.each((childPath) => {
             const node = childPath.getValue();
-            propsAndLoc.push({
-              loc: options.locStart(node),
-              node,
-              printed: print(childPath)
-            });
+            propsAndLoc.push({loc: locStart(node), node, printed: print(childPath)});
           }, field);
         });
 
@@ -1055,7 +1042,7 @@ export class PrinterJS {
             separatorParts.shift();
           }
           if(
-            UtilShared.isNextLineEmpty(options.originalText, prop.node, options)
+            UtilShared.isNextLineEmpty(originalText, prop.node, options)
           ) {
             separatorParts.push(hardline);
           }
@@ -1090,12 +1077,10 @@ export class PrinterJS {
         } else {
           content = concat([
             leftBrace,
-            indent(
-              concat([options.bracketSpacing ? line : softline, concat(props)])
-            ),
+            indent(concat([bracketLineChar, concat(props)])),
             ifBreak(canHaveTrailingSeparator && (separator !== ','
               || PrinterJS.shouldPrintComma(options)) ? separator : ''),
-            concat([options.bracketSpacing ? line : softline, rightBrace]),
+            concat([bracketLineChar, rightBrace]),
             PrinterJS.printOptionalToken(path),
             PrinterJS.printTypeAnnotation(path, options, print)
           ]);
@@ -1181,9 +1166,7 @@ export class PrinterJS {
           }
         } else {
           const lastElem = Util.getLast(n.elements);
-          const canHaveTrailingComma = !(
-            lastElem && lastElem.type === 'RestElement'
-          );
+          const canHaveTrailingComma = !(lastElem && lastElem.type === 'RestElement');
 
           // JavaScript allows you to have empty elements in an array which
           // changes its length based on the number of commas. The algorithm
@@ -1201,13 +1184,13 @@ export class PrinterJS {
             group(
               concat([
                 '[',
-                indent(concat([softline, PrinterJS.printArrayItems(path, options, 'elements', print)])),
+                indent(concat([bracketLineChar, PrinterJS.printArrayItems(path, options, 'elements', print)])),
                 needsForcedTrailingComma ? ',' : '',
                 ifBreak(
                   canHaveTrailingComma && !needsForcedTrailingComma && PrinterJS.shouldPrintComma(options) ? ',' : ''
                 ),
                 Comments.printDanglingComments(path, options, true),
-                softline,
+                bracketLineChar,
                 ']'
               ])
             )
@@ -1268,7 +1251,7 @@ export class PrinterJS {
         // TypeScript workaround for eslint/typescript-eslint-parser#267
         // See corresponding workaround in FastPath.js needsParens()
         const grandParent = path.getParentNode(1);
-        const isTypeScriptDirective = options.parser === 'typescript' && typeof n.value === 'string'
+        const isTypeScriptDirective = parser === 'typescript' && typeof n.value === 'string'
           && grandParent && (grandParent.type === 'Program' || grandParent.type === 'BlockStatement');
 
         return PrinterJS.nodeStr(n, options, isTypeScriptDirective);
@@ -1349,12 +1332,22 @@ export class PrinterJS {
         );
       case 'WithStatement':
         return group(
-          concat(['with (', path.call(print, 'object'), ')', PrinterJS.adjustClause(n.body, path.call(print, 'body'))])
+          concat([
+            `with${keywordSpaceChar}(`,
+            path.call(print, 'object'),
+            ')',
+            PrinterJS.adjustClause(n.body, path.call(print, 'body'))
+          ])
         );
       case 'IfStatement': {
         const con = PrinterJS.adjustClause(n.consequent, path.call(print, 'consequent'));
         const opening = group(
-          concat(['if (', group(concat([indent(concat([softline, path.call(print, 'test')])), softline])), ')', con])
+          concat([
+            `if${keywordSpaceChar}(`,
+            group(concat([indent(concat([softline, path.call(print, 'test')])), softline])),
+            ')',
+            con
+          ])
         );
 
         parts.push(opening);
@@ -1392,7 +1385,7 @@ export class PrinterJS {
           printedComments,
           group(
             concat([
-              'for (',
+              `for${keywordSpaceChar}(`,
               group(
                 concat([
                   indent(
@@ -1419,7 +1412,7 @@ export class PrinterJS {
       case 'WhileStatement':
         return group(
           concat([
-            'while (',
+            `while${keywordSpaceChar}(`,
             group(
               concat([
                 indent(concat([softline, path.call(print, 'test')])),
@@ -1434,7 +1427,7 @@ export class PrinterJS {
         // Note: esprima can't actually parse "for each (".
         return group(
           concat([
-            n.each ? 'for each (' : 'for (',
+            n.each ? `for each${keywordSpaceChar}(` : `for${keywordSpaceChar}(`,
             path.call(print, 'left'),
             ' in ',
             path.call(print, 'right'),
@@ -1454,7 +1447,7 @@ export class PrinterJS {
           concat([
             'for',
             isAwait ? ' await' : '',
-            ' (',
+            `${keywordSpaceChar}(`,
             path.call(print, 'left'),
             ' of ',
             path.call(print, 'right'),
@@ -1474,18 +1467,9 @@ export class PrinterJS {
         } else {
           parts.push(hardline);
         }
-        parts.push('while (');
 
-        parts.push(
-          group(
-            concat([
-              indent(concat([softline, path.call(print, 'test')])),
-              softline
-            ])
-          ),
-          ')',
-          semi
-        );
+        parts.push(`while${keywordSpaceChar}(`);
+        parts.push(group(concat([indent(concat([softline, path.call(print, 'test')])), softline])), ')', semi);
 
         return concat(parts);
       }
@@ -1530,7 +1514,7 @@ export class PrinterJS {
         ]);
       case 'CatchClause':
         return concat([
-          'catch ',
+          `catch${keywordSpaceChar}(`,
           n.param ? concat(['(', path.call(print, 'param'), ') ']) : '',
           path.call(print, 'body')
         ]);
@@ -1541,7 +1525,7 @@ export class PrinterJS {
         return concat([
           group(
             concat([
-              'switch (',
+              `switch${keywordSpaceChar}(`,
               indent(concat([softline, path.call(print, 'discriminant')])),
               softline,
               ')'
@@ -1560,7 +1544,7 @@ export class PrinterJS {
                       casePath.call(print),
                       n.cases.indexOf(caseNode) !== n.cases.length - 1 &&
                         UtilShared.isNextLineEmpty(
-                          options.originalText,
+                          originalText,
                           caseNode,
                           options
                         )
@@ -1747,7 +1731,7 @@ export class PrinterJS {
           && PrinterJS.hasTrailingComment(Util.getLast(n.attributes));
 
         const bracketSameLine =
-          options.jsxBracketSameLine &&
+          jsxBracketSameLine &&
           // We should print the bracket in a new line for the following cases:
           // <div
           //   // comment
@@ -1763,10 +1747,7 @@ export class PrinterJS {
         const shouldBreak =
           n.attributes &&
           n.attributes.some(
-            (attr) =>
-              attr.value &&
-              PrinterJS.isStringLiteral(attr.value) &&
-              attr.value.value.includes('\n')
+            (attr) => attr.value && PrinterJS.isStringLiteral(attr.value) && attr.value.value.includes('\n')
           );
 
         return group(
@@ -1920,12 +1901,7 @@ export class PrinterJS {
             // quasi literal), therefore we want to indent the JavaScript
             // expression inside at the beginning of ${ instead of the beginning
             // of the `.
-            const tabWidth = options.tabWidth;
-            const indentSize = Util.getIndentSize(
-              childPath.getValue().value.raw,
-              tabWidth
-            );
-
+            const indentSize = Util.getIndentSize(childPath.getValue().value.raw, tabWidth);
             let printed = expressions[i];
 
             if(
@@ -2091,7 +2067,7 @@ export class PrinterJS {
             (parent.type === 'ObjectTypeProperty' &&
               !PrinterJS.getFlowVariance(parent) &&
               !parent.optional &&
-              options.locStart(parent) === options.locStart(n)) ||
+              locStart(parent) === locStart(n)) ||
             parent.type === 'ObjectTypeCallProperty' ||
             (parentParentParent && parentParentParent.type === 'DeclareFunction')
           );
@@ -2234,7 +2210,7 @@ export class PrinterJS {
           !(
             (parent.type === 'TypeAlias' ||
               parent.type === 'VariableDeclarator') &&
-            PrinterJS.hasLeadingOwnLineComment(options.originalText, n, options)
+            PrinterJS.hasLeadingOwnLineComment(originalText, n, options)
           );
 
         // {
@@ -2605,7 +2581,7 @@ export class PrinterJS {
             '{',
             indent(
               concat([
-                options.bracketSpacing ? line : softline,
+                bracketLineChar,
                 n.readonlyToken
                   ? concat([path.call(print, 'readonlyToken'), ' '])
                   : '',
@@ -2619,7 +2595,7 @@ export class PrinterJS {
               ])
             ),
             Comments.printDanglingComments(path, options, /* sameIndent */ true),
-            options.bracketSpacing ? line : softline,
+            bracketLineChar,
             '}'
           ])
         );
@@ -2648,11 +2624,7 @@ export class PrinterJS {
         return group(concat(parts));
       case 'TSNamespaceExportDeclaration':
         parts.push('export as namespace ', path.call(print, 'name'));
-
-        if(options.semi) {
-          parts.push(';');
-        }
-
+        parts.push(semi);
         return group(concat(parts));
       case 'TSEnumDeclaration':
         if(PrinterJS.isNodeStartingWithDeclare(n, options)) {
@@ -2719,10 +2691,7 @@ export class PrinterJS {
           path.call(print, 'moduleReference')
         );
 
-        if(options.semi) {
-          parts.push(';');
-        }
-
+        parts.push(semi);
         return group(concat(parts));
       case 'TSExternalModuleReference':
         return concat(['require(', path.call(print, 'expression'), ')']);
@@ -2745,11 +2714,7 @@ export class PrinterJS {
           const isGlobalDeclaration =
             n.id.type === 'Identifier' &&
             n.id.name === 'global' &&
-            !/namespace|module/.test(
-              options.originalText.slice(
-                options.locStart(n),
-                options.locStart(n.id)
-              )
+            !/namespace|module/.test(originalText.slice(locStart(n), locStart(n.id))
             );
 
           if(!isGlobalDeclaration) {
@@ -3435,9 +3400,11 @@ export class PrinterJS {
 
   static printExportDeclaration(path, options, print) {
     const decl = path.getValue();
-    const semi = options.semi ? ';' : '';
+    const {bracketSpacing, semi: semiOpt} = options;
+    const semi = semiOpt ? ';' : '';
     const parts: any[] = ['export '];
     const isDefault = decl['default'] || decl.type === 'ExportDefaultDeclaration';
+    const bracketLineChar = bracketSpacing ? line : softline;
 
     if(isDefault) {
       parts.push('default ');
@@ -3491,9 +3458,9 @@ export class PrinterJS {
             ? group(
               concat([
                 '{',
-                indent(concat([options.bracketSpacing ? line : softline, join(concat([',', line]), specifiers)])),
+                indent(concat([bracketLineChar, join(concat([',', line]), specifiers)])),
                 ifBreak(PrinterJS.shouldPrintComma(options) ? ',' : ''),
-                options.bracketSpacing ? line : softline,
+                bracketLineChar,
                 '}'
               ])
             )
@@ -4861,6 +4828,8 @@ export class PrinterJS {
     ) {
       return true;
     }
+
+    return false;
   }
 
   static classChildNeedsASIProtection(node) {

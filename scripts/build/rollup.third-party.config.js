@@ -1,13 +1,13 @@
-import baseConfig from "./rollup.base.config.js";
-import resolve from "rollup-plugin-node-resolve";
-import commonjs from "rollup-plugin-commonjs";
-import json from "rollup-plugin-json";
-import replace from "rollup-plugin-replace";
+import baseConfig from './rollup.base.config.js';
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
+import json from 'rollup-plugin-json';
+import replace from 'rollup-plugin-replace';
 
 export default Object.assign(baseConfig, {
-  entry: "src/common/third-party.js",
-  dest: "dist/third-party.js",
-  format: "cjs",
+  input: 'src/common/third-party.js',
+  dest: 'lib/ThirdParty.js',
+  format: 'cjs',
   plugins: [
     replace({
       // The require-from-string module (a dependency of cosmiconfig) assumes
@@ -16,11 +16,11 @@ export default Object.assign(baseConfig, {
       // with rollup the module is turned into a plain function located directly
       // in index.js so `module.parent` does not exist. Defaulting to `module`
       // instead seems to work.
-      "module.parent": "(module.parent || module)"
+      'module.parent': '(module.parent || module)'
     }),
     json(),
     resolve({ preferBuiltins: true }),
     commonjs()
   ],
-  external: ["assert"]
+  external: ['assert']
 });

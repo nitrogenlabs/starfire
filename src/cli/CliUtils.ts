@@ -1,25 +1,25 @@
-import camelCase from 'camelcase';
+import * as camelCase from 'camelcase';
 import chalk from 'chalk';
-import dashify from 'dashify';
-import fs from 'fs';
-import globby from 'globby';
+import * as dashify from 'dashify';
+import * as fs from 'fs';
+import * as globby from 'globby';
 import ignore from 'ignore';
-import leven from 'leven';
+import * as leven from 'leven';
 import {flatten, groupBy, pick} from 'lodash';
 import path from 'path';
 import readline from 'readline';
 
 import {CleanAst} from '../common/CleanAst';
-import {ConfigError, DebugError} from '../common/errors';
+import {ConfigError} from '../common/errors/ConfigError';
+import {DebugError} from '../common/errors/DebugError';
 import {Support} from '../common/Support';
 import {ThirdParty} from '../common/ThirdParty';
 import {Util} from '../common/Util';
 import {ResolveConfig} from '../config/ResolveConfig';
-import {Starfire} from '../index';
+import {Starfire} from '../StarFire/Starfire';
 import {Options} from '../main/Options';
 import {OptionsNormalizer} from '../main/OptionsNormalizer';
 import {CLIConstants} from './CLIConstants';
-import minimist from './minimist';
 
 export interface LogFunctionType {
   debug: (type: string, color: string) => void;
@@ -34,7 +34,7 @@ export interface CLIContextType {
   logger?: any;
 }
 
-export class Utils {
+export class CliUtils {
   static OPTION_USAGE_THRESHOLD: number = 25;
   static CHOICE_USAGE_MARGIN: number = 3;
   static CHOICE_USAGE_INDENTATION: number = 2;
@@ -105,17 +105,18 @@ export class Utils {
     }
   }
 
-  static listDifferent(context, input, options, filename): boolean {
+  static listDifferent(context, input, options, filePath: string): boolean {
     if(!context.argv['list-different']) {
       return null;
     }
 
-    options = {...options, filepath: filename};
+    options = {...options, filePath};
 
     if(!Starfire.check(input, options)) {
       if(!context.argv['write']) {
-        context.logger.log(filename);
+        context.logger.log(filePath);
       }
+
       process.exitCode = 1;
     }
 
@@ -133,7 +134,7 @@ export class Utils {
       const pppp = Starfire.format(pp, opt);
 
       if(pp !== pppp) {
-        throw new DebugError('Starfire(input) !== Starfire(Starfire(input))\n' + Utils.diff(pp, pppp));
+        throw new DebugError('Starfire(input) !== Starfire(Starfire(input))\n' + CliUtils.diff(pp, pppp));
       } else {
         const normalizedOpts = Options.normalize(opt);
         const ast = CleanAst.cleanAST(
@@ -150,17 +151,17 @@ export class Utils {
           const astDiff =
             ast.length > MAX_AST_SIZE || past.length > MAX_AST_SIZE
               ? 'AST diff too large to render'
-              : Utils.diff(ast, past);
+              : CliUtils.diff(ast, past);
           throw new DebugError(
             'ast(input) !== ast(Starfire(input))\n' +
             astDiff +
             '\n' +
-            Utils.diff(input, pp)
+            CliUtils.diff(input, pp)
           );
         }
       }
 
-      return {formatted: opt.filepath || '(stdin)\n'};
+      return {formatted: opt.filePath || '(stdin)\n'};
     }
 
     return Starfire.formatWithCursor(input, opt);
@@ -194,17 +195,17 @@ export class Utils {
     }
   }
 
-  static getOptionsForFile(context, filepath): any {
-    const options = Utils.getOptionsOrDie(context, filepath);
+  static getOptionsForFile(context, filePath: string): any {
+    const options = CliUtils.getOptionsOrDie(context, filePath);
     const hasPlugins = options && options.plugins;
 
     if(hasPlugins) {
-      Utils.pushContextPlugins(context, options.plugins);
+      CliUtils.pushContextPlugins(context, options.plugins);
     }
 
     const appliedOptions = {
-      filepath,
-      ...Utils.applyConfigPrecedence(
+      filePath,
+      ...CliUtils.applyConfigPrecedence(
         context,
         options &&
         OptionsNormalizer.normalizeApiOptions(options, context.supportOptions, {
@@ -219,42 +220,45 @@ export class Utils {
     );
 
     if(hasPlugins) {
-      Utils.popContextPlugins(context);
+      CliUtils.popContextPlugins(context);
     }
 
     return appliedOptions;
   }
 
   static parseArgsToOptions(context, overrideDefaults?): any {
-    const minimistOptions = Utils.createMinimistOptions(context.detailedOptions);
-    const apiDetailedOptionMap = Utils.createApiDetailedOptionMap(context.detailedOptions);
+    const minimistOptions = CliUtils.createMinimistOptions(context.detailedOptions);
+    const apiDetailedOptionMap = CliUtils.createApiDetailedOptionMap(context.detailedOptions);
 
-    return Utils.getOptions(
-      OptionsNormalizer.normalizeCliOptions(
-        minimist(
-          context.args,
-          {
-            boolean: minimistOptions.boolean,
-            default: Utils.cliifyOptions(overrideDefaults, apiDetailedOptionMap),
-            string: minimistOptions.string
-          }
-        ),
-        context.detailedOptions,
-        {logger: false}
-      ),
-      context.detailedOptions
-    );
+    console.log('minimistOptions', minimistOptions);
+    console.log('apiDetailedOptionMap', apiDetailedOptionMap);
+    console.log('overrideDefaults', overrideDefaults);
+    // return CliUtils.getOptions(
+    //   OptionsNormalizer.normalizeCliOptions(
+    //     minimist(
+    //       context.args,
+    //       {
+    //         boolean: minimistOptions.boolean,
+    //         default: CliUtils.cliifyOptions(overrideDefaults, apiDetailedOptionMap),
+    //         string: minimistOptions.string
+    //       }
+    //     ),
+    //     context.detailedOptions,
+    //     {logger: false}
+    //   ),
+    //   context.detailedOptions
+    // );
   }
 
   static applyConfigPrecedence(context, options): any {
     try {
       switch(context.argv['config-precedence']) {
         case 'cli-override':
-          return Utils.parseArgsToOptions(context, options);
+          return CliUtils.parseArgsToOptions(context, options);
         case 'file-override':
-          return {...Utils.parseArgsToOptions(context), options};
+          return {...CliUtils.parseArgsToOptions(context), options};
         case 'prefer-file':
-          return options || Utils.parseArgsToOptions(context);
+          return options || CliUtils.parseArgsToOptions(context);
         default:
           return null;
       }
@@ -265,28 +269,28 @@ export class Utils {
   }
 
   static formatStdin(context): any {
-    const filepath = context.argv['stdin-filepath']
+    const filePath = context.argv['stdin-filepath']
       ? path.resolve(process.cwd(), context.argv['stdin-filepath'])
       : process.cwd();
-    const ignorer = Utils.createIgnorer(context);
-    const relativeFilepath = path.relative(process.cwd(), filepath);
+    const ignorer = CliUtils.createIgnorer(context);
+    const relativeFilepath = path.relative(process.cwd(), filePath);
 
     ThirdParty.getStream(process.stdin).then((input) => {
       if(relativeFilepath && ignorer.filter([relativeFilepath]).length === 0) {
-        Utils.writeOutput({formatted: input}, {});
+        CliUtils.writeOutput({formatted: input}, {});
         return;
       }
 
-      const options = Utils.getOptionsForFile(context, filepath);
+      const options = CliUtils.getOptionsForFile(context, filePath);
 
-      if(Utils.listDifferent(context, input, options, '(stdin)')) {
+      if(CliUtils.listDifferent(context, input, options, '(stdin)')) {
         return;
       }
 
       try {
-        Utils.writeOutput(Utils.format(context, input, options), options);
+        CliUtils.writeOutput(CliUtils.format(context, input, options), options);
       } catch(error) {
-        Utils.handleError(context, 'stdin', error);
+        CliUtils.handleError(context, 'stdin', error);
       }
     });
   }
@@ -327,7 +331,7 @@ export class Utils {
         return;
       }
       filePaths.forEach((filePath) =>
-        callback(filePath, Utils.getOptionsForFile(context, filePath))
+        callback(filePath, CliUtils.getOptionsForFile(context, filePath))
       );
     } catch(error) {
       context.logger.error(
@@ -341,10 +345,10 @@ export class Utils {
   static formatFiles(context): any {
     // The ignorer will be used to filter file paths after the glob is checked,
     // before any files are actually written
-    const ignorer = Utils.createIgnorer(context);
+    const ignorer = CliUtils.createIgnorer(context);
 
-    Utils.eachFilename(context, context.filePatterns, (filename, options) => {
-      const fileIgnored = ignorer.filter([filename]).length === 0;
+    CliUtils.eachFilename(context, context.filePatterns, (filePath, options) => {
+      const fileIgnored = ignorer.filter([filePath]).length === 0;
       if(
         fileIgnored &&
         (context.argv['debug-check'] ||
@@ -356,18 +360,18 @@ export class Utils {
 
       if(context.argv['write'] && process.stdout.isTTY) {
         // Don't use `console.log` here since we need to replace this line.
-        context.logger.log(filename, {newline: false});
+        context.logger.log(filePath, {newline: false});
       }
 
       let input;
       try {
-        input = fs.readFileSync(filename, 'utf8');
+        input = fs.readFileSync(filePath, 'utf8');
       } catch(error) {
         // Add newline to split errors from filename line.
         context.logger.log('');
 
         context.logger.error(
-          `Unable to read file: ${filename}\n${error.message}`
+          `Unable to read file: ${filePath}\n${error.message}`
         );
         // Don't exit the process if one file failed
         process.exitCode = 2;
@@ -375,11 +379,11 @@ export class Utils {
       }
 
       if(fileIgnored) {
-        Utils.writeOutput({formatted: input}, options);
+        CliUtils.writeOutput({formatted: input}, options);
         return;
       }
 
-      Utils.listDifferent(context, input, options, filename);
+      CliUtils.listDifferent(context, input, options, filePath);
 
       const start = Date.now();
 
@@ -387,17 +391,17 @@ export class Utils {
       let output;
 
       try {
-        result = Utils.format(
+        result = CliUtils.format(
           context,
           input,
-          {...options, filepath: filename}
+          {...options, filePath}
         );
         output = result.formatted;
       } catch(error) {
         // Add newline to split errors from filename line.
         process.stdout.write('\n');
 
-        Utils.handleError(context, filename, error);
+        CliUtils.handleError(context, filePath, error);
         return;
       }
 
@@ -412,20 +416,20 @@ export class Utils {
         // mtime based caches.
         if(output === input) {
           if(!context.argv['list-different']) {
-            context.logger.log(`${chalk.grey(filename)} ${Date.now() - start}ms`);
+            context.logger.log(`${chalk.gray(filePath)} ${Date.now() - start}ms`);
           }
         } else {
           if(context.argv['list-different']) {
-            context.logger.log(filename);
+            context.logger.log(filePath);
           } else {
-            context.logger.log(`${filename} ${Date.now() - start}ms`);
+            context.logger.log(`${filePath} ${Date.now() - start}ms`);
           }
 
           try {
-            fs.writeFileSync(filename, output, 'utf8');
+            fs.writeFileSync(filePath, output, 'utf8');
           } catch(error) {
             context.logger.error(
-              `Unable to write file: ${filename}\n${error.message}`
+              `Unable to write file: ${filePath}\n${error.message}`
             );
             // Don't exit the process if one file failed
             process.exitCode = 2;
@@ -438,7 +442,7 @@ export class Utils {
           process.exitCode = 2;
         }
       } else if(!context.argv['list-different']) {
-        Utils.writeOutput(result, options);
+        CliUtils.writeOutput(result, options);
       }
     });
   }
@@ -461,7 +465,7 @@ export class Utils {
   }
 
   static createUsage(context): string {
-    const options = Utils.getOptionsWithOpposites(context.detailedOptions).filter(
+    const options = CliUtils.getOptionsWithOpposites(context.detailedOptions).filter(
       // remove unnecessary option (e.g. `semi`, `color`, etc.), which is only used for --help <flag>
       (option) =>
         !(
@@ -483,38 +487,32 @@ export class Utils {
 
     const optionsUsage = allCategories.map((category) => {
       const categoryOptions = groupedOptions[category]
-        .map((option) => Utils.createOptionUsage(context, option, Utils.OPTION_USAGE_THRESHOLD))
+        .map((option) => CliUtils.createOptionUsage(context, option, CliUtils.OPTION_USAGE_THRESHOLD))
         .join('\n');
-      return `${category} options:\n\n${Utils.indent(categoryOptions, 2)}`;
+      return `${category} options:\n\n${CliUtils.indent(categoryOptions, 2)}`;
     });
 
     return [CLIConstants.usageSummary].concat(optionsUsage, ['']).join('\n\n');
   }
 
   static createOptionUsage(context, option, threshold): string {
-    const header = Utils.createOptionUsageHeader(option);
-    const optionDefaultValue = Utils.getOptionDefaultValue(context, option.name);
-    return Utils.createOptionUsageRow(
-      header,
-      `${option.description}${
-      optionDefaultValue === undefined
-        ? ''
-        : `\nDefaults to ${Utils.createDefaultValueDisplay(optionDefaultValue)}.`
-      }`,
-      threshold
-    );
+    const header = CliUtils.createOptionUsageHeader(option);
+    const optionDefaultValue = CliUtils.getOptionDefaultValue(context, option.name);
+    const defaultLabel: string = `\nDefaults to ${CliUtils.createDefaultValueDisplay(optionDefaultValue)}.`;
+    const optionDefaultLabel: string = optionDefaultValue === undefined ? '' : defaultLabel;
+    return CliUtils.createOptionUsageRow(header, `${option.description}${optionDefaultLabel}`, threshold);
   }
 
   static createDefaultValueDisplay(value): string {
     return Array.isArray(value)
-      ? `[${value.map(Utils.createDefaultValueDisplay).join(', ')}]`
+      ? `[${value.map(CliUtils.createDefaultValueDisplay).join(', ')}]`
       : value;
   }
 
   static createOptionUsageHeader(option): string {
     const name = `--${option.name}`;
     const alias = option.alias ? `-${option.alias},` : null;
-    const type = Utils.createOptionUsageType(option);
+    const type = CliUtils.createOptionUsageType(option);
     return [alias, name, type].filter(Boolean).join(' ');
   }
 
@@ -578,43 +576,43 @@ export class Utils {
         .map((choice) => choice.value.length)
         .reduce((current, length) => Math.max(current, length), 0) + margin;
     return activeChoices.map((choice) =>
-      Utils.indent(
-        Utils.createOptionUsageRow(choice.value, choice.description, threshold),
+      CliUtils.indent(
+        CliUtils.createOptionUsageRow(choice.value, choice.description, threshold),
         indentation
       )
     );
   }
 
   static createDetailedUsage(context, optionName): any {
-    const option = Utils.getOptionWithLevenSuggestion(
+    const option = CliUtils.getOptionWithLevenSuggestion(
       context,
-      Utils.getOptionsWithOpposites(context.detailedOptions),
+      CliUtils.getOptionsWithOpposites(context.detailedOptions),
       optionName
     );
 
-    const header = Utils.createOptionUsageHeader(option);
-    const description = `\n\n${Utils.indent(option.description, 2)}`;
+    const header = CliUtils.createOptionUsageHeader(option);
+    const description = `\n\n${CliUtils.indent(option.description, 2)}`;
 
     const choices =
       option.type !== 'choice'
         ? ''
-        : `\n\nValid options:\n\n${Utils.createChoiceUsages(
+        : `\n\nValid options:\n\n${CliUtils.createChoiceUsages(
           option.choices,
-          Utils.CHOICE_USAGE_MARGIN,
-          Utils.CHOICE_USAGE_INDENTATION
+          CliUtils.CHOICE_USAGE_MARGIN,
+          CliUtils.CHOICE_USAGE_INDENTATION
         ).join('\n')}`;
 
-    const optionDefaultValue = Utils.getOptionDefaultValue(context, option.name);
+    const optionDefaultValue = CliUtils.getOptionDefaultValue(context, option.name);
     const defaults =
       optionDefaultValue !== undefined
-        ? `\n\nDefault: ${Utils.createDefaultValueDisplay(optionDefaultValue)}`
+        ? `\n\nDefault: ${CliUtils.createDefaultValueDisplay(optionDefaultValue)}`
         : '';
 
     const pluginDefaults =
       option.pluginDefaults && Object.keys(option.pluginDefaults).length
         ? `\nPlugin defaults:${Object.keys(option.pluginDefaults).map(
           (key) =>
-            `\n* ${key}: ${Utils.createDefaultValueDisplay(
+            `\n* ${key}: ${CliUtils.createDefaultValueDisplay(
               option.pluginDefaults[key]
             )}`
         )}`
@@ -709,7 +707,7 @@ export class Utils {
         const option = detailedOptionMap[name];
         return {
           ...normalized,
-          [name]: Utils.normalizeDetailedOption(name, option)
+          [name]: CliUtils.normalizeDetailedOption(name, option)
         };
       }, {});
   }
@@ -775,19 +773,19 @@ export class Utils {
   static createContext(args): any {
     const context: CLIContextType = {args};
 
-    Utils.updateContextArgv(context);
-    Utils.normalizeContextArgv(context, ['loglevel', 'plugin']);
+    CliUtils.updateContextArgv(context);
+    CliUtils.normalizeContextArgv(context, ['loglevel', 'plugin']);
 
-    context.logger = Utils.createLogger(context.argv['loglevel']);
+    context.logger = CliUtils.createLogger(context.argv['loglevel']);
 
-    Utils.updateContextArgv(context, context.argv['plugin']);
+    CliUtils.updateContextArgv(context, context.argv['plugin']);
 
     return context;
   }
 
   static initContext(context): void {
     // split into 2 step so that we could wrap this in a `try..catch` in cli/index.js
-    Utils.normalizeContextArgv(context);
+    CliUtils.normalizeContextArgv(context);
   }
 
   static updateContextOptions(context, plugins): void {
@@ -797,8 +795,8 @@ export class Utils {
       showInternal: true,
       showUnreleased: true
     }).options;
-    const detailedOptionMap = Utils.normalizeDetailedOptionMap(
-      {...Utils.createDetailedOptionMap(supportOptions), ...CLIConstants.options}
+    const detailedOptionMap = CliUtils.normalizeDetailedOptionMap(
+      {...CliUtils.createDetailedOptionMap(supportOptions), ...CLIConstants.options}
     );
     const detailedOptions = Util.arrayify(detailedOptionMap, 'name');
     const apiDefaultOptions = supportOptions
@@ -820,7 +818,7 @@ export class Utils {
     context._detailedOptions = context.detailedOptions;
     context._detailedOptionMap = context.detailedOptionMap;
     context._apiDefaultOptions = context.apiDefaultOptions;
-    Utils.updateContextOptions(context, plugins);
+    CliUtils.updateContextOptions(context, plugins);
   }
 
   static popContextPlugins(context): void {
@@ -831,13 +829,13 @@ export class Utils {
   }
 
   static updateContextArgv(context, plugins?): void {
-    Utils.pushContextPlugins(context, plugins);
+    // CliUtils.pushContextPlugins(context, plugins);
 
-    const minimistOptions = Utils.createMinimistOptions(context.detailedOptions);
-    const argv = minimist(context.args, minimistOptions);
+    // const minimistOptions = CliUtils.createMinimistOptions(context.detailedOptions);
+    // const argv = minimist(context.args, minimistOptions);
 
-    context.argv = argv;
-    context.filePatterns = argv['_'];
+    // context.argv = argv;
+    // context.filePatterns = argv['_'];
   }
 
   static normalizeContextArgv(context, keys?): void {

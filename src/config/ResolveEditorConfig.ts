@@ -1,9 +1,10 @@
 
 import editorconfig from 'editorconfig';
-import editorConfigToStarfire from 'editorconfig-to-prettier';
+import {Parser} from '../common/Parser';
 import findProjectRoot from 'find-project-root';
 import mem from 'mem';
 import path from 'path';
+import {SFOptionsType} from '../types/options';
 
 export class ResolveEditorConfig {
   static maybeParse(filePath, config, parse) {
@@ -11,18 +12,17 @@ export class ResolveEditorConfig {
     return filePath && parse(filePath, {root});
   }
 
-  static editorconfigAsyncNoCache(filePath, config) {
-    return Promise.resolve(ResolveEditorConfig.maybeParse(filePath, config, editorconfig.parse)).then(
-      editorConfigToStarfire
-    );
+  static editorconfigAsyncNoCache(filePath, config): Promise<SFOptionsType> {
+    return Promise.resolve(ResolveEditorConfig.maybeParse(filePath, config, editorconfig.parse))
+      .then(Parser.editorConfigToStarfire);
   }
 
   static get editorconfigAsyncWithCache() {
     return mem(ResolveEditorConfig.editorconfigAsyncNoCache);
   }
 
-  static editorconfigSyncNoCache(filePath: string, config) {
-    return editorConfigToStarfire(ResolveEditorConfig.maybeParse(filePath, config, editorconfig.parseSync));
+  static editorconfigSyncNoCache(filePath: string, config): SFOptionsType {
+    return Parser.editorConfigToStarfire(ResolveEditorConfig.maybeParse(filePath, config, editorconfig.parseSync));
   }
 
   static get editorconfigSyncWithCache() {

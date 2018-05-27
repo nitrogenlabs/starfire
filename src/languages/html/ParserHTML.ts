@@ -4,7 +4,7 @@ export class ParserHTML {
     const parse5 = require('parse5');
 
     try {
-      const isFragment = !/^\s*<(!doctype|html|head|body|!--)/i.test(text);
+      const isFragment: boolean = !/^\s*<(!doctype|html|head|body|!--)/i.test(text);
       const ast = (isFragment ? parse5.parseFragment : parse5.parse)(text, {
         locationInfo: true,
         treeAdapter: parse5.treeAdapters.htmlparser2

@@ -190,7 +190,7 @@ export class DocPrinter {
   }
 
   static printDocToString(document, options) {
-    const width = options.printWidth;
+    const width = options.maxLineLength;
     const newLine = options.newLine || '\n';
     let pos = 0;
     // cmds is basically a stack. We've turned a recursive call into a

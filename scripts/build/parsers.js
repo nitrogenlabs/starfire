@@ -1,4 +1,4 @@
-export default [
+module.exports = [
   "languages/js/ParserBabylon",
   "languages/js/ParserFlow",
   "languages/js/ParserTypescript",

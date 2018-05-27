@@ -12,7 +12,7 @@ function tryFormat(file) {
       // Allow specifying the parser via an environment variable:
       parser: process.env.PARSER,
       // Use file extension detection otherwise:
-      filepath: file
+      filePath: file
     });
   } catch (error) {
     return error;

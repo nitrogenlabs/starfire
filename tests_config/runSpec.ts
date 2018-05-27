@@ -2,11 +2,15 @@ import fs from 'fs';
 import {extname} from 'path';
 import {CleanAst} from '../src/common/CleanAst';
 import {Options} from '../src/main/Options';
+import {SFOptionsType} from '../src/types/options';
 import {Starfire} from './requireStarfire';
 
 const AST_COMPARE = process.env['AST_COMPARE'];
+const defaultOptions: SFOptionsType = {
+  maxLineLength: 80
+};
 
-const runSpec = (dirname, parsers, options?) => {
+const runSpec = (dirname, parsers, options = {}) => {
   /* instabul ignore if */
   if(!parsers || !parsers.length) {
     throw new Error(`No parsers were specified for ${dirname}`);
@@ -18,7 +22,8 @@ const runSpec = (dirname, parsers, options?) => {
       extname(filename) !== '.snap' &&
       fs.lstatSync(path).isFile() &&
       filename[0] !== '.' &&
-      filename !== 'jsfmt.spec.ts'
+      filename !== 'jsfmt.spec.ts' &&
+      filename !== 'jsfmt.spec.js'
     ) {
       let rangeStart = 0;
       let rangeEnd = Infinity;
@@ -32,15 +37,16 @@ const runSpec = (dirname, parsers, options?) => {
           rangeEnd = offset;
           return '';
         });
-
-      const mergedOptions = Object.assign(mergeDefaultOptions(options || {}), {
+      const mergedOptions = {
+        ...defaultOptions,
+        ...options,
         parser: parsers[0],
         rangeEnd,
         rangeStart
-      });
+      };
       const output = prettyprint(source, path, mergedOptions);
       test(`${filename} - ${mergedOptions.parser}-verify`, () =>
-        expect(raw(source + '~'.repeat(mergedOptions.printWidth) + '\n' + output)).toMatchSnapshot(filename));
+        expect(raw(source + '~'.repeat(mergedOptions.maxLineLength) + '\n' + output)).toMatchSnapshot(filename));
 
       parsers.slice(1).forEach((parserName) => {
         test(`${filename} - ${parserName}-verify`, () => {
@@ -106,17 +112,9 @@ const stripLocation = (ast) => {
   return ast;
 };
 
-const parse = (str: string, opts) => {
-  return stripLocation(Starfire.debug.parse(str, opts).ast);
-};
-
-const prettyprint = (src, filepath, options) => {
-  return Starfire.format(src, {filepath, ...options});
-};
-
-const read = (filename) => {
-  return fs.readFileSync(filename, 'utf8');
-};
+const parse = (str: string, opts: SFOptionsType) => stripLocation(Starfire.debug.parse(str, opts).ast);
+const prettyprint = (src, filePath: string, options: SFOptionsType) => Starfire.format(src, {filePath, ...options});
+const read = (filePath: string) => fs.readFileSync(filePath, 'utf8');
 
 /**
  * Wraps a string in a marker object that is used by `./raw-serializer.js` to
@@ -127,9 +125,6 @@ const raw = (str: string) => {
   if(typeof str !== 'string') {
     throw new Error('Raw snapshots have to be strings.');
   }
-  return {[Symbol.for('raw')]: str};
-};
 
-const mergeDefaultOptions = (parserConfig) => {
-  return {printWidth: 120, ...parserConfig};
+  return {[Symbol.for('raw')]: str};
 };

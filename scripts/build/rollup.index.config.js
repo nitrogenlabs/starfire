@@ -1,35 +1,37 @@
-import baseConfig from "./rollup.base.config.js";
-import resolve from "rollup-plugin-node-resolve";
-import commonjs from "rollup-plugin-commonjs";
-import json from "rollup-plugin-json";
-import replace from "rollup-plugin-replace";
-import * as path from "path";
+import baseConfig from './rollup.base.config.js';
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
+import json from 'rollup-plugin-json';
+import replace from 'rollup-plugin-replace';
+import * as path from 'path';
 
-const external = ["assert"];
+const external = ['assert'];
 
-if (process.env.BUILD_TARGET !== "website") {
-  external.push(path.resolve("src/common/third-party.js"));
+if(process.env.BUILD_TARGET !== 'website') {
+  external.push(path.resolve('src/common/third-party.js'));
 }
 
 export default Object.assign(baseConfig, {
-  entry: "index.js",
-  dest: "dist/index.js",
-  format: "cjs",
+  input: 'index.js',
+  output: {
+    format: 'cjs',
+    lib: 'lib/index.js',
+    paths: {
+      [path.resolve('src/common/third-party.js')]: './third-party'
+    }
+  },
   plugins: [
     replace({
-      "process.env.NODE_ENV": JSON.stringify("production"),
+      'process.env.NODE_ENV': JSON.stringify('production'),
       // See comment in jest.config.js
-      "require('graceful-fs')": "require('fs')"
+      'require(\'graceful-fs\')': 'require(\'fs\')'
     }),
     json(),
     resolve({
       preferBuiltins: true,
-      extensions: [".js", ".json"]
+      extensions: ['.js', '.json']
     }),
     commonjs()
   ],
-  external,
-  paths: {
-    [path.resolve("src/common/third-party.js")]: "./third-party"
-  }
+  external
 });
