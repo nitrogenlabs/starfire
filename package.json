@@ -6,8 +6,12 @@
     "starfire": "./dist/starfire.js"
   },
   "repository": "nitrogenlabs/starfire",
-  "homepage": "https://nitrogenlabs.com/starfire",
-  "author": "Giraldo Rosales <giraldo@nitrogenlabs.com> (http://nitrogenlabs.com/)",
+  "homepage": "https://starfire.nitrogenlabs.com",
+  "author": {
+    "name": "Giraldo Rosales",
+    "email": "giraldo@nitrogenlabs.com",
+    "url": "http://nitrogenlabs.com"
+  },
   "license": "MIT",
   "main": "./index.js",
   "engines": {
@@ -16,14 +20,13 @@
   "scripts": {
     "build": "lex compile -t",
     "build:docs": "node ./scripts/build/build-docs.js",
+    "clean": "lex clean",
     "check:deps": "node ./scripts/check-deps.js",
-    "lint": "cross-env EFF_NO_LINK_RULES=true eslint . --format node_modules/eslint-friendly-formatter",
+    "lint": "eslint ./src --ext .ts,.tsx",
     "prepublishOnly": "yarn prepare:release",
     "prepare:release": "yarn && yarn build && yarn test",
-    "reset": "rm -rf node_modules yarn.lock && yarn",
-    "test": "lex jest",
-    "test:integration": "jest testsIntegration",
-    "update": "yarn upgrade-interactive --latest",
+    "test": "lex test",
+    "update": "lex update -i",
     "watch": "lex compile -t -w"
   },
   "dependencies": {
@@ -71,9 +74,6 @@
     "resolve": "^1.8.1",
     "semver": "^5.5.0",
     "string-width": "^2.1.1",
-    "tslint": "^5.11.0",
-    "tslint-eslint-rules": "^5.3.1",
-    "tslint-react": "^3.6.0",
     "typescript": "3.0.1",
     "typescript-eslint-parser": "^18.0.0",
     "unicode-regex": "^2.0.0",
